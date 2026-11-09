@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Passport Photo Pouch Maker</title>
+<style>
+*{box-sizing:border-box}
+:root{--accent:#1265a8;--dark:#123b64;--tag:#f08a24}
+body{margin:0;background:#080e1d;color:#e5edff;font:14px Arial,sans-serif}
+.topbar{height:auto;min-height:62px;padding:14px 20px;background:#10192c;
+display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:20px;font-weight:800}
+.brand small{display:block;color:#91a6c9;font-size:11px;margin-top:5px}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+button{border:0;border-radius:7px;padding:10px 13px;background:#2563eb;
+color:white;cursor:pointer;font-weight:bold}
+button.green{background:#059669}
+button.gray{background:#334155}
+button:hover{filter:brightness(1.15)}
+.workspace{display:grid;grid-template-columns:365px minmax(0,1fr);min-height:calc(100vh - 62px)}
+.sidebar{padding:16px;background:#0d1527;border-right:1px solid #26334e}
+.sidebar h3{margin:4px 0 14px;font-size:16px}
+.section{background:#131e33;border:1px solid #25334d;border-radius:10px;
+padding:13px;margin-bottom:12px}
+.section h4{margin:0 0 12px;color:#9ec5ff}
+label{display:block;font-size:12px;color:#b8c8e4;margin:10px 0 5px}
+input,select{width:100%;padding:10px;border:1px solid #354563;
+border-radius:7px;background:#080f20;color:white;outline:none}
+input[type=color]{height:38px;padding:3px}
+input[type=checkbox]{width:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;align-items:center;gap:7px;margin:8px 0}
+.check label{margin:0}
+.preview{padding:18px;overflow:auto}
+.previewhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+margin:0 0 14px;color:#a9c4ed;font-size:12px}
+#sheet{width:210mm;height:297mm;background:#fff;color:#123b64;margin:0 auto;
+padding:8mm;box-shadow:0 8px 35px #0008;display:grid;
+grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:5mm}
+.pouch{min-width:0;position:relative;display:flex;flex-direction:column;
+align-items:center;overflow:hidden;padding:0 2mm}
+.serial{position:absolute;left:0;top:0;background:var(--dark);color:white;
+font-size:7px;padding:2px 5px;z-index:2;border-radius:2px}
+.pouchsvg{width:100%;height:100%;position:absolute;inset:0}
+.pouch-content{position:relative;z-index:1;width:100%;text-align:center;
+padding-top:28mm;color:var(--dark)}
+.logo{width:12mm;height:12mm;object-fit:contain;display:none;margin:0 auto 2.5mm}
+.shop{font-weight:900;font-size:clamp(9px,1.3vw,17px);letter-spacing:.5px;
+overflow-wrap:anywhere}
+.phone{display:inline-block;border-radius:20px;padding:1.5mm 4mm;
+background:var(--accent);color:white;font-size:8px;font-weight:bold;margin-top:2mm}
+.address{font-size:7px;font-weight:700;margin:1.8mm auto;max-width:92%;overflow-wrap:anywhere;line-height:1.35}
+.ribbon{display:inline-block;background:var(--tag);color:white;font-weight:bold;
+font-size:6px;padding:1.5mm 3mm;border-radius:10px;margin-top:2mm}
+.photo-info{position:absolute;left:18%;right:18%;bottom:22%;
+height:17%;display:flex;flex-direction:column;justify-content:center;
+text-align:left;font-size:6px;color:#526779}
+.write-line{border-bottom:1px dotted #9aabba;height:5mm}
+.footnote{position:absolute;bottom:1mm;font-size:5px;color:#9aa6b5}.maker{position:absolute;top:1.5mm;right:1.5mm;font-size:5px;font-weight:800;color:#64748b;z-index:3}
+@media(max-width:850px){.workspace{grid-template-columns:1fr}.preview{padding:8px}
+#sheet{transform-origin:top left;width:210mm;max-width:none}}
+@media print{
+ @page{size:A4 portrait;margin:0}
+ body{background:white}
+ .topbar,.sidebar,.previewhead{display:none!important}
+ .workspace{display:block;min-height:0}
+ .preview{padding:0;overflow:visible}
+ #sheet{margin:0;width:210mm;height:297mm;padding:8mm;box-shadow:none}
+ *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+ <div class="brand">📸 Passport Photo Pouch Maker
+  <small>A4 Layout · Custom Design · Print Ready</small>
+ </div>
+ <div class="actions">
+  <button onclick="render()">Generate</button>
+  <button onclick="window.print()">🖨 Print A4</button>
+  <button class="green" onclick="savePDF()">Save PDF</button>
+  <button class="gray" onclick="savePNG()">Save PNG</button>
+ </div>
+</header>
+
+<div class="workspace">
+<aside class="sidebar">
+ <h3>🎨 Design Studio</h3>
+
+ <div class="section">
+  <h4>Preset Themes</h4>
+  <label>ডিজাইন নির্বাচন</label>
+  <select id="theme" onchange="setTheme()">
+   <option value="blue">CSC Royal Blue</option>
+   <option value="maroon">Premium Maroon</option>
+   <option value="gold">Golden Classic</option>
+   <option value="black">Modern Black</option>
+   <option value="green">Govt Style Emerald</option>
+   <option value="cyan">Digital Cyber Cyan</option>
+  </select>
+  <div class="two">
+   <div><label>মূল রং</label><input type="color" id="accent" value="#1265a8"></div>
+   <div><label>গাঢ় রং</label><input type="color" id="dark" value="#123b64"></div>
+  </div>
+  <label>রিবন রং</label><input type="color" id="tag" value="#f08a24">
+ </div>
+
+ <div class="section">
+  <h4>🏪 Shop Branding</h4>
+  <label>Cyber Cafe / Studio Name</label>
+  <input id="shop" value="Sopno Studio">
+  <label>Mobile / Phone</label>
+  <input id="phone" value="014XXXXXXXX">
+  <label>Badge / Ribbon</label>
+  <input id="ribbon" value="INSTANT 5 MINS PASSPORT PHOTO">
+  <label>Full Address / Location</label>
+  <input id="address" value="আপনার দোকানের সম্পূর্ণ ঠিকানা লিখুন">
+  <label>নিজের দোকানের লোগো</label>
+  <input id="logoFile" type="file" accept="image/*" onchange="uploadLogo(event)">
+  <div class="check"><input type="checkbox" id="showLogo">
+   <label for="showLogo">লোগো দেখাও</label></div>
+ </div>
+
+ <div class="section">
+  <h4>✂️ Pouch Settings</h4>
+  <label>প্রতি A4 পৃষ্ঠায় পাউচ</label>
+  <select id="count" onchange="render()">
+   <option value="4">4 Pouches (2 × 2)</option>
+   <option value="2">2 Large Pouches</option>
+  </select>
+  <div class="check"><input type="checkbox" id="cut" checked onchange="render()">
+   <label for="cut">Cutting line দেখাও</label></div>
+  <div class="check"><input type="checkbox" id="info" checked onchange="render()">
+   <label for="info">নাম ও তারিখ লেখার জায়গা</label></div>
+  <div class="check"><input type="checkbox" id="serial" checked onchange="render()">
+   <label for="serial">পাউচ নম্বর দেখাও</label></div>
+  <p style="font-size:11px;color:#9aacca;line-height:1.7">
+   প্রিন্টের সময় A4, Portrait, Scale 100% এবং Browser Headers/Footers বন্ধ রাখো।
+  </p>
+ </div>
+</aside>
+
+<main class="preview">
+ <div class="previewhead">
+  <span>▸ TRUE A4 PRINT SIZE · 210 × 297 mm</span>
+  <span>Measured pouch net · approx. 90 × 130 mm each (4-up A4)</span>
+ </div>
+ <div id="sheet"></div>
+</main>
+</div>
+
+<script>
+let logoURL="";
+const $=id=>document.getElementById(id);
+function setTheme(){
+ const themes={
+  blue:["#1265a8","#123b64","#f08a24"],
+  maroon:["#a52645","#64152b","#d7a64a"],
+  gold:["#b47b19","#61400e","#a52645"],
+  black:["#30394a","#101827","#bd9144"],
+  green:["#138568","#07533f","#d9a441"],
+  cyan:["#00a7cf","#07506b","#f08a24"]
+ };
+ const t=themes[$("theme").value];
+ ["accent","dark","tag"].forEach((id,i)=>$(id).value=t[i]);
+ render();
+}
+function uploadLogo(e){
+ const f=e.target.files[0];if(!f)return;
+ const reader=new FileReader();
+ reader.onload=()=>{logoURL=reader.result;render()};
+ reader.readAsDataURL(f);
+}
+function svgShape(){
+ const cut=$("cut").checked;
+ const stroke=cut?"#438da5":"#c5d4e2";
+ // Cutting outline modeled on the user's reference: straight body,
+ // angled shoulders, side notches and broad fold/glue panels.
+ return `<svg class="pouchsvg" viewBox="0 0 100 140" preserveAspectRatio="none" aria-label="Passport photo cover cutting template">
+ <path d="M16 0 L84 0 L88 18 L96 24 L96 78 L88 84 L84 140 L16 140 L12 84 L4 78 L4 24 L12 18 Z"
+ fill="#fff" stroke="${stroke}" stroke-width="${cut?0.75:0.45}"/>
+ <!-- Dotted fold lines: central pouch body, side folds, top and bottom flaps -->
+ <path d="M12 18 L88 18 M12 84 L88 84 M16 0 L12 18 M84 0 L88 18 M12 18 L12 84 M88 18 L88 84 M12 84 L16 140 M88 84 L84 140"
+ fill="none" stroke="#6f9eaf" stroke-width="0.55" stroke-dasharray="1.5 1.2"/>
+ <!-- Main body guide -->
+ <path d="M12 18 L88 18 L88 84 L12 84 Z" fill="none" stroke="#c5d4e2" stroke-width="0.4"/>
+ </svg>`;
+}
+function pouchHTML(i){
+ const logo=$("showLogo").checked&&logoURL
+  ?`<img class="logo" style="display:block" src="${logoURL}">`:"";
+ const showInfo=$("info").checked;
+ return `<div class="pouch">
+ ${svgShape()}
+ ${$("serial").checked?`<div class="serial">${i+1}</div>`:""}
+ <div class="pouch-content">
+ ${logo}
+ <div class="shop">${esc($("shop").value)}</div>
+  <div class="phone">☎ ${esc($("phone").value)}</div>
+ <div class="address">${esc($("address").value)}</div>
+ <div class="ribbon">${esc($("ribbon").value)}</div>
+ </div>
+ ${showInfo?`<div class="photo-info">
+ <div class="write-line">NAME:</div>
+ <div class="write-line">DATE:</div>
+  </div>`:""}
+ <div class="footnote">CUT OUTER LINE · FOLD DOTTED LINE · GLUE SIDE TABS</div>
+ <div class="maker">make by SC_Sopno</div>
+ </div>`;
+}
+function esc(s){
+ return String(s).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+function render(){
+ document.documentElement.style.setProperty("--accent",$("accent").value);
+ document.documentElement.style.setProperty("--dark",$("dark").value);
+ document.documentElement.style.setProperty("--tag",$("tag").value);
+ const count=+$("count").value;
+ const sheet=$("sheet");
+ sheet.style.gridTemplateRows=count===2?"1fr":"1fr 1fr";
+ sheet.innerHTML=Array.from({length:count},(_,i)=>pouchHTML(i)).join("");
+ sheet.querySelectorAll(".pouch").forEach(p=>{
+  if(count===2)p.style.minHeight="0";
+ });
+}
+function savePDF(){window.print()}
+async function savePNG(){
+ const sheet=$("sheet");
+ if(!window.html2canvasLoaded){
+  const s=document.createElement("script");
+  s.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+  document.body.appendChild(s);
+  await new Promise((resolve,reject)=>{s.onload=resolve;s.onerror=reject});
+  window.html2canvasLoaded=true;
+ }
+ const canvas=await html2canvas(sheet,{scale:3,backgroundColor:"#ffffff",useCORS:true});
+ const a=document.createElement("a");
+ a.download="passport-photo-pouch.png";
+ a.href=canvas.toDataURL("image/png");a.click();
+}
+document.querySelectorAll("input:not([type=file]):not([type=checkbox]),select").forEach(el=>{
+ el.addEventListener("input",render);
+});
+$("showLogo").addEventListener("change",render);
+render();
+</script>
+</body>
+</html>
